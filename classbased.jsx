@@ -1,55 +1,45 @@
-import React, { Component } from 'react';
+//我不会ts所以用js写的
+import React, { useState, useEffect } from 'react';
 
-class UserData extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      user: null,
-      seconds: 0,
-    };
-  }
+const UserData = ({ userId }) => {
+  const [user, setUser] = useState(null);
+  const [seconds, setSeconds] = useState(0);
 
-  componentDidMount() {
-    this.fetchUserData();
-    this.intervalId = setInterval(() => {
-      this.setState(prevState => ({ seconds: prevState.seconds + 1 }));
-    }, 1000);
-  }
-
-  componentDidUpdate(prevProps, prevState) {
-    if (this.props.userId !== prevProps.userId) {
-      this.fetchUserData();
-    }
-  }
-
-  componentWillUnmount() {
-    clearInterval(this.intervalId);
-  }
-
-  fetchUserData = () => {
-    fetch(`https://secret.url/user/${this.props.userId}`)
+  const fetchUserData = () => {
+    fetch(`https://secret.url/user/${userId}`)
       .then(response => response.json())
-      .then(data => this.setState({ user: data }))
+      .then(data => setUser(data))
       .catch(error => console.error('Error fetching user data:', error));
-  }
+  };
 
-  render() {
-    const { user, seconds } = this.state;
-    return (
-      <div>
-        <h1>User Data Component</h1>
-        {user ? (
-          <div>
-            <p>Name: {user.name}</p>
-            <p>Email: {user.email}</p>
-          </div>
-        ) : (
-          <p>Loading user data...</p>
-        )}
-        <p>Timer: {seconds} seconds</p>
-      </div>
-    );
-  }
-}
+  useEffect(() => {
+    fetchUserData();
+    
+    // 在 useEffect 中定义定时器，并在卸载时清除它
+    const intervalId = setInterval(() => {
+      setSeconds(prevSeconds => prevSeconds + 1);
+    }, 1000);
+
+    // 清理函数，在组件卸载时清除定时器
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [userId]); // 当 userId 改变时重新运行 effect
+
+  return (
+    <div>
+      <h1>User Data Component</h1>
+      {user ? (
+        <div>
+          <p>Name: {user.name}</p>
+          <p>Email: {user.email}</p>
+        </div>
+      ) : (
+        <p>Loading user data...</p>
+      )}
+      <p>Timer: {seconds} seconds</p>
+    </div>
+  );
+};
 
 export default UserData;
